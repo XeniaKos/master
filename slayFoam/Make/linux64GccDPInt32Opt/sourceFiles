@@ -1,0 +1,4 @@
+SOURCE = \
+slayFoam.C \
+
+# sources
