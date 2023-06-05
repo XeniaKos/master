@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+expressions
+(
+    C1
+    {
+        field       C1;
+        dimensions  [0 -3 0 0 1 0 0];
+
+        constants
+        {
+            centre  (0.043 0.075 0);
+        }
+
+        variables
+        (
+            "radius = 0.0215"
+        );
+
+        condition
+        #{
+            (mag(pos() - $[(vector)constants.centre]) < radius)
+
+        #};
+
+        expression
+        #{
+            3
+        #};
+
+    }
+
+);
+
+
+// ************************************************************************* //
