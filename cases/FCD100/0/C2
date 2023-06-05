@@ -1,0 +1,90 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      C2;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 -3 0 0 1 0 0]; //mol per cubic meter
+
+internalField   uniform 0;
+
+boundaryField
+{ 
+    inlet
+    {
+        type            codedMixed;
+
+        refValue        uniform 0.0;
+        refGradient     uniform 0.0;
+        valueFraction   uniform 0.0;
+
+        name    zeroZnFlux;
+
+        code
+        #{
+            //transport properties
+            const scalar Mu2 = 3.07e-13;
+            const scalar D2 = 0.00000000197;
+
+            //variable values at the patch
+            const scalarField& Fi = patch().lookupPatchField<volScalarField, scalar>("Fi");
+            const scalarField& C2 = patch().lookupPatchField<volScalarField, scalar>("C2");
+
+            //variable values at the cell center next to boundary patch
+            const tmp<scalarField>& Fi_O = patch().lookupPatchField<volScalarField, scalar>("Fi").patchInternalField();
+
+
+            forAll(patch().Cf(), faceID)
+            {
+                this->refValue() = 0.0;
+                this->valueFraction() = 0.0;
+                this->refGrad() = -(C2[faceID]*Mu2/D2)*(Fi[faceID] - Fi_O.ref()[faceID])*this->patch().deltaCoeffs();
+            }            
+        #};
+
+        codeInclude
+        #{
+            #include "fvCFD.H"            
+        #};
+
+        codeOptions
+        #{
+                -I$(LIB_SRC)/finiteVolime/lnInclude \
+                -I$(LIB_SRC)/meshTools/lnInclude \
+        #};
+    }
+
+    outlet
+    {
+        type    fixedGradient; 
+        gradient   uniform -6.96e05; //i = 1000A/m2
+    }
+
+    upperWall
+    {
+        type    zeroGradient;
+    }
+
+    lowerWall
+    {
+        type    zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type    empty;
+    }
+}
+
+
+// ************************************************************************* //

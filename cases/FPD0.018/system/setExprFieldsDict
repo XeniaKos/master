@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+expressions
+(
+    Fi
+    {
+        field       Fi;
+        dimensions  [1 2 -3 0 0 -1 0];
+
+        constants
+        {
+            side  (0.08 0.04 0.001);
+        }
+
+        variables
+        (
+            
+        );
+
+        condition
+        #{
+            (mag(pos() - $[(vector)constants.side]) > 0)
+
+        #};
+
+        expression
+        #{
+            0.018 - 0.225*pos().x()
+        #};
+
+    }
+
+);
+
+
+// ************************************************************************* //

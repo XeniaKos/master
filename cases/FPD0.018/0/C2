@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      C2;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 -3 0 0 1 0 0];
+
+internalField   uniform 0; 
+
+boundaryField
+{ 
+    inlet
+    {
+        type            codedMixed;
+
+        refValue        uniform 0.0;
+        refGradient     uniform 0.0;
+        valueFraction   uniform 0.0;
+
+        name    zeroZnFlux;
+
+        code
+        #{
+            //transport properties
+            const scalar Mu2 = 1.08e-12;
+            const scalar D2 = 7.45e-09;
+
+            //varible values at the patch
+            const scalarField& Fi = patch().lookupPatchField<volScalarField, scalar>("Fi");
+            const scalarField& C2 = patch().lookupPatchField<volScalarField, scalar>("C2");
+
+            //varible values at the cell center next to boundary patch
+            const tmp<scalarField>& Fi_O = patch().lookupPatchField<volScalarField, scalar>("Fi").patchInternalField();
+
+
+            forAll(patch().Cf(), faceID)
+            {
+                this->refValue() = 0.0;
+                this->valueFraction() = 0.0;
+                this->refGrad() = -(C2[faceID]*Mu2/D2)*(Fi[faceID] - Fi_O.ref()[faceID])*this->patch().deltaCoeffs();
+            }            
+        #};
+
+        codeInclude
+        #{
+            #include "fvCFD.H"            
+        #};
+
+        codeOptions
+        #{
+                -I$(LIB_SRC)/finiteVolime/lnInclude \
+                -I$(LIB_SRC)/meshTools/lnInclude \
+        #};
+    }
+
+    outlet
+    {
+        type            codedMixed;
+
+        refValue        uniform 0.0;
+        refGradient     uniform 0.0;
+        valueFraction   uniform 0.0;
+
+        name    ZnFlux;
+
+        code
+        #{
+            //transport properties
+            const scalar D2 = 7.45e-09;
+            const scalar z = 2;
+            const scalar F = 96485;
+
+            //varible values at the patch
+            const scalarField& Fi = patch().lookupPatchField<volScalarField, scalar>("Fi");
+
+            //varible values at the cell center next to boundary patch
+            const tmp<scalarField>& Fi_O = patch().lookupPatchField<volScalarField, scalar>("Fi").patchInternalField();
+            const tmp<scalarField>& kappa_O = patch().lookupPatchField<volScalarField, scalar>("kappa").patchInternalField();
+
+
+            forAll(patch().Cf(), faceID)
+            {
+                this->refValue() = 0.0;
+                this->valueFraction() = 0.0;
+                this->refGrad() = (kappa_O.ref()[faceID]*(Fi[faceID] - Fi_O.ref()[faceID])*this->patch().deltaCoeffs())/(z*F*D2);
+            }
+        #};
+
+        codeInclude
+        #{
+            #include "fvCFD.H"            
+        #};
+
+        codeOptions
+        #{
+                -I$(LIB_SRC)/finiteVolime/lnInclude \
+                -I$(LIB_SRC)/meshTools/lnInclude \
+        #};
+    }
+
+    upperWall
+    {
+        type    zeroGradient;
+    }
+
+    lowerWall
+    {
+        type    zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type    empty;
+    }
+}
+
+
+// ************************************************************************* //

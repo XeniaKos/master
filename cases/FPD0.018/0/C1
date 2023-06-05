@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      C1;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 -3 0 0 1 0 0]; 
+
+internalField   uniform 26386;  
+
+boundaryField
+{
+    inlet
+    {
+        type            codedMixed;
+
+        refValue        uniform 0.0;
+        refGradient     uniform 0.0;
+        valueFraction   uniform 0.0;
+
+        name    NaFlux;
+
+        code
+        #{
+            //transport properties
+            const scalar z = 1;
+            const scalar D1 = 8.01e-09;
+            const scalar F = 96485;
+
+            //variable values at the patch
+            const scalarField& Fi = patch().lookupPatchField<volScalarField, scalar>("Fi");
+
+            //variable values at the cell center next to boundary patch
+            const tmp<scalarField>& Fi_O = patch().lookupPatchField<volScalarField, scalar>("Fi").patchInternalField();
+            const tmp<scalarField>& kappa_O = patch().lookupPatchField<volScalarField, scalar>("kappa").patchInternalField();
+
+
+            forAll(patch().Cf(), faceID)
+            {
+                this->refValue() = 0.0;
+                this->valueFraction() = 0.0;
+                this->refGrad() = -(kappa_O.ref()[faceID]*(Fi_O.ref()[faceID] - Fi[faceID])*this->patch().deltaCoeffs())/(z*F*D1);
+            }           
+        #};
+
+        codeInclude
+        #{
+            #include "fvCFD.H"            
+        #};
+
+        codeOptions
+        #{
+                -I$(LIB_SRC)/finiteVolime/lnInclude \
+                -I$(LIB_SRC)/meshTools/lnInclude \
+        #};
+    }
+
+    outlet
+    {
+        type            codedMixed;
+
+        refValue        uniform 0.0;
+        refGradient     uniform 0.0;
+        valueFraction   uniform 0.0;
+
+        name    zeroNaFlux;
+
+        code
+        #{
+            //transport properties
+            const scalar Mu1 = 1.16e-12;
+            const scalar D1 = 8.01e-09;
+
+            //varible values at the patch
+            const scalarField& Fi = patch().lookupPatchField<volScalarField, scalar>("Fi");
+            const scalarField& C1 = patch().lookupPatchField<volScalarField, scalar>("C1");
+
+            //varible values at the cell center next to boundary patch
+            const tmp<scalarField>& Fi_O = patch().lookupPatchField<volScalarField, scalar>("Fi").patchInternalField();
+
+
+            forAll(patch().Cf(), faceID)
+            {
+                this->refValue() = 0.0;
+                this->valueFraction() = 0.0;
+                this->refGrad() = -(C1[faceID]*Mu1/D1)*(Fi[faceID] - Fi_O.ref()[faceID])*this->patch().deltaCoeffs();
+            }            
+        #};
+
+        codeInclude
+        #{
+            #include "fvCFD.H"            
+        #};
+
+        codeOptions
+        #{
+                -I$(LIB_SRC)/finiteVolime/lnInclude \
+                -I$(LIB_SRC)/meshTools/lnInclude \
+        #};
+    }
+
+    upperWall
+    {
+        type    zeroGradient;
+    }
+
+    lowerWall
+    {
+        type    zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type    empty;
+    }
+}
+
+
+// ************************************************************************* //
