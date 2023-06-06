@@ -24,15 +24,6 @@ solvers
         relTol          0;
     }
 
-//    C2
-//    {
-//        solver          PBiCGStab;
-//        preconditioner  DILU;
-//        tolerance       1e-6;
-//        relTol          0;
-//        norm            default;
-//    }
-
     C2
     {
         solver          GAMG;

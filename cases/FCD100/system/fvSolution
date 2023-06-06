@@ -33,15 +33,6 @@ solvers
 
     }
 
-    C3
-    {
-        solver          GAMG;
-        smoother  DILU;
-        tolerance       1e-6;
-        relTol          0;
-
-    }
-
     Fi
     {
 
